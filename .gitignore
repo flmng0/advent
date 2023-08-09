@@ -1,3 +1,6 @@
+/inputs/*.txt
+
+
 *.annot
 *.cmo
 *.cma
