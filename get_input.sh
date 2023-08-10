@@ -9,7 +9,7 @@ YEAR=$2
 [ -z "$YEAR" ] && YEAR="2022"
 
 if [ -z "$ADVENT_SESSION" ]; then
-	echo "Make sure to set ADVENT_SECRET"
+	echo "Make sure to set ADVENT_SESSION"
 	exit 1
 fi
 
