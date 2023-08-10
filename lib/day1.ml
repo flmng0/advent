@@ -10,7 +10,7 @@ let get_elves lines =
   in
   elves_loop [] 0 lines
 
-let solve input =
+let part_a input =
   let lines = get_lines input in
   let elves = get_elves lines in
 
@@ -19,7 +19,7 @@ let solve input =
   Printf.printf "Highest scoring elf: %d\n" elf;
   ()
 
-let solve_b input =
+let part_b input =
   let elves = get_lines input |> get_elves |> List.sort compare |> List.rev in
 
   let best3 = firstn 3 elves in
