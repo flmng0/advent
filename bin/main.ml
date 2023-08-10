@@ -1,21 +1,30 @@
 let year = ref 2022
 let day = ref 1
 let b_side = ref false
+let use_stdin = ref false
 
 let speclist =
   [
     ("-year", Arg.Set_int year, "Solve for the given year");
     ("-day", Arg.Set_int day, "Solve for the given day");
     ("-b", Arg.Set b_side, "Solve the 2nd part");
+    ("-stdin", Arg.Set use_stdin, "Use stdin for the input values");
   ]
 
-let usage_msg = "advent -day <day> [-year <year>]"
+let usage_msg = "advent [-year <year>] [-b] [-stdin] <day>"
 
 let () =
   Arg.parse speclist ignore usage_msg;
 
-  let path = Printf.sprintf "inputs/day%d.txt" !day in
-  let input = open_in path in
+  let input =
+    if !use_stdin then stdin
+    else
+      let path = Printf.sprintf "inputs/day%d.txt" !day in
+      open_in path
+  in
   let b_side = !b_side in
 
-  Advent.solve !day ~input ~b_side
+  Advent.solve !day ~input ~b_side;
+  close_in input;
+
+  ()
