@@ -11,6 +11,7 @@ let solve ?(input = stdin) ?(b_side = false) day =
       | 2 -> (module Day2 : Solver)
       | 3 -> (module Day3 : Solver)
       | 4 -> (module Day4 : Solver)
+      | 5 -> (module Day5 : Solver)
       | _ -> raise Not_found
     with Not_found ->
       let msg = Format.sprintf "Solver not implemented for day %d" day in
