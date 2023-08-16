@@ -24,32 +24,55 @@ module Grid = struct
   let index x y g = x + (y * g.cols)
 
   let get x y g =
-    let i = index x y g in
-    g.data.(i)
+    if x < 0 || x >= g.cols || y < 0 || y >= g.rows then None
+    else
+      let i = index x y g in
+      Some g.data.(i)
 
   type dir = Top | Right | Bottom | Left
 
   let move n dir =
     match dir with
-    | Top -> (-n, 0)
-    | Right -> (0, n)
-    | Bottom -> (n, 0)
-    | Left -> (0, -n)
+    | Top -> (0, -n)
+    | Right -> (n, 0)
+    | Bottom -> (0, n)
+    | Left -> (-n, 0)
 
   let is_hidden x y g =
-    let this_h = get x y g in
-    let check_taller xoff yoff =
-      let h = get (x + xoff) (y + yoff) g in
-      h >= this_h
-    in
+    let this_h = Option.get (get x y g) in
 
     let rec check_dir i dir =
       let xoff, yoff = move i dir in
-      try if check_taller xoff yoff then true else check_dir (i + 1) dir
-      with _ -> false
+
+      match get (x + xoff) (y + yoff) g with
+      | None -> false
+      | Some h -> if h >= this_h then true else check_dir (i + 1) dir
     in
 
     [ Top; Right; Bottom; Left ] |> List.for_all (check_dir 1)
+
+  let scenic_score x y g =
+    let this_h = Option.get (get x y g) in
+    let rec score_dir i dir =
+      let xoff, yoff = move i dir in
+
+      match get (x + xoff) (y + yoff) g with
+      | None -> i - 1
+      | Some h -> if h >= this_h then i else score_dir (i + 1) dir
+    in
+
+    let scores = [ Top; Right; Bottom; Left ] |> List.map (score_dir 1) in
+    List.fold_left ( * ) 1 scores
+
+  let best_scenic_score g =
+    Seq.ints 0
+    |> Seq.take (Array.length g.data)
+    |> Seq.fold_left
+         (fun last i ->
+           let x, y = coord i g in
+           let score = scenic_score x y g in
+           if score > last then score else last)
+         0
 
   let count_hidden g =
     Seq.ints 0
@@ -61,6 +84,10 @@ module Grid = struct
              (is_hidden x y g);
            match is_hidden x y g with true -> acc + 1 | false -> acc)
          0
+
+  let count_visible g =
+    let total = Array.length g.data in
+    total - count_hidden g
 
   let pp g =
     Printf.printf "Columns: %d\nRows: %d\n\nData: \n" g.cols g.rows;
@@ -75,14 +102,19 @@ module Grid = struct
     ()
 end
 
-let solve ch =
+let part_a ch =
   let lines = get_lines ch in
   let grid = Grid.of_lines lines in
 
   Grid.pp grid;
-  let h_count = Grid.count_hidden grid in
-  print_int h_count;
+  let v_count = Grid.count_visible grid in
+  print_int v_count;
   print_newline ()
 
-let part_a ch = solve ch
-let part_b _in = ()
+let part_b ch =
+  let lines = get_lines ch in
+  let grid = Grid.of_lines lines in
+
+  let score = Grid.best_scenic_score grid in
+  print_int score;
+  print_newline ()
