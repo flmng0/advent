@@ -10,6 +10,7 @@ let input_line_opt chan =
 
 let line_seq chan = Seq.unfold input_line_opt chan
 let get_lines chan = List.of_seq @@ line_seq chan
+let get_blob chan = Seq.fold_left ( ^ ) "" (line_seq chan)
 
 let rec skip n seq =
   match seq () with
