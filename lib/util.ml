@@ -11,6 +11,11 @@ let input_line_opt chan =
 let line_seq chan = Seq.unfold input_line_opt chan
 let get_lines chan = List.of_seq @@ line_seq chan
 let get_blob chan = Seq.fold_left ( ^ ) "" (line_seq chan)
+let rec ints_step ?(step = 1) i () = Seq.Cons (i, ints_step (i + step))
+
+let range ?(step = 1) start end_ =
+  let n = abs (end_ - start) in
+  ints_step ~step start |> Seq.take n
 
 let rec skip n seq =
   match seq () with
