@@ -1,3 +1,5 @@
+let day = 2
+
 open Util
 
 type shape = Rock | Paper | Scissors

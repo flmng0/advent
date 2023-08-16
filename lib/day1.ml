@@ -1,3 +1,5 @@
+let day = 1
+
 open Util
 
 let elf line = int_of_string line

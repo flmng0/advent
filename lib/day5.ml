@@ -1,3 +1,5 @@
+let day = 5
+
 open Util
 
 type index = int

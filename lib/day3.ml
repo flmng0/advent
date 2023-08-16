@@ -1,3 +1,5 @@
+let day = 3
+
 open Util
 module CharSet = Set.Make (Char)
 

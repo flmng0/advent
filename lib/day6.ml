@@ -1,3 +1,5 @@
+let day = 6
+
 module CharSet = Set.Make (Char)
 
 let is_unique text =

@@ -1,3 +1,5 @@
+let day = 4
+
 open Util
 
 type range = { first : int; last : int }
@@ -6,8 +8,7 @@ let inside a b =
   let inside' a b = a.first <= b.first && a.last >= b.last in
   inside' a b || inside' b a
 
-let intersect a b =
-  a.first <= b.last && a.last >= b.first
+let intersect a b = a.first <= b.last && a.last >= b.first
 
 let parse_range text =
   let nums = String.split_on_char '-' text |> List.map int_of_string in
