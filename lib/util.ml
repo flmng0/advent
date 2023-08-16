@@ -11,6 +11,11 @@ let input_line_opt chan =
 let line_seq chan = Seq.unfold input_line_opt chan
 let get_lines chan = List.of_seq @@ line_seq chan
 
+let rec skip n seq =
+  match seq () with
+  | Seq.Nil -> Seq.empty
+  | Cons (_, seq) -> if n == 0 then seq else skip (n - 1) seq
+
 let seq_windows n seq =
   let open Seq in
   let rec loop acc seq () =
@@ -21,9 +26,9 @@ let seq_windows n seq =
   loop [] seq
 
 let split_seq pred seq =
-  let rec loop acc_a acc_b is_after (seq : string Seq.t) =
+  let rec loop acc_a acc_b is_after seq =
     match seq () with
-    | Nil -> (List.rev acc_a, List.rev acc_b)
+    | Seq.Nil -> (List.rev acc_a, List.rev acc_b)
     | Cons (line, seq) ->
         if pred line then loop acc_a acc_b true seq
         else if is_after then loop acc_a (line :: acc_b) is_after seq
