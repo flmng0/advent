@@ -8,6 +8,7 @@ let input_line_opt chan =
     close_in chan;
     None
 
+let identity x = x
 let line_seq chan = Seq.unfold input_line_opt chan
 let get_lines chan = line_seq chan |> List.of_seq
 let get_blob chan = Seq.fold_left ( ^ ) "" (line_seq chan)
