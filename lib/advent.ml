@@ -27,6 +27,7 @@ module Solver = struct
     |> add (module Day6)
     |> add (module Day7)
     |> add (module Day8)
+    |> add (module Day9)
 
   let get day b = Map.find_opt (day, b) solvers
 end
