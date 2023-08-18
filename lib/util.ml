@@ -9,7 +9,7 @@ let input_line_opt chan =
     None
 
 let line_seq chan = Seq.unfold input_line_opt chan
-let get_lines chan = List.of_seq @@ line_seq chan
+let get_lines chan = line_seq chan |> List.of_seq
 let get_blob chan = Seq.fold_left ( ^ ) "" (line_seq chan)
 let rec ints_step ?(step = 1) i () = Seq.Cons (i, ints_step (i + step))
 

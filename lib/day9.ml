@@ -109,7 +109,6 @@ let part_b ch =
          (PairSet.empty, knots)
   in
 
-  (* PairSet.iter (fun (x, y) -> Printf.printf "Visited: (%d, %d)\n" x y) visited; *)
   let count = visited |> PairSet.elements |> List.length in
   print_int count;
   print_newline ()
