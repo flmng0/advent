@@ -49,4 +49,18 @@ let part_a ch =
   print_int total;
   print_newline ()
 
-let part_b _ch = ()
+let part_b ch =
+  let open CRT in
+  let instructions =
+    get_lines ch |> List.filter not_empty |> List.map instruction_of_string
+  in
+
+  let draw (c, x) =
+    let i = c mod 40 in
+    let pixel = if abs (i - (x + 1)) <= 1 then "#" else "." in
+    print_string pixel;
+    if c mod 40 = 0 then print_newline () else ()
+  in
+
+  collect_cycles instructions |> Seq.iter draw
+(* |> Seq.iter (fun (c, x) -> Printf.printf "Cycle: %d - X: %d\n" c x) *)
