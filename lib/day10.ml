@@ -15,22 +15,27 @@ module CRT = struct
     | [ "noop" ] -> NoOp
     | _ -> raise Not_found
 
+  let collect_cycles instructions () =
+    let rec aux x cycle runtime = function
+      | [] -> Seq.Nil
+      | curr :: rest ->
+          let cycle = cycle + 1 in
+          if runtime = instruction_time curr then
+            let x = apply x curr in
+            Cons ((cycle, x), fun () -> aux x cycle 1 rest)
+          else
+            Cons ((cycle, x), fun () -> aux x cycle (runtime + 1) (curr :: rest))
+    in
+    aux 1 0 0 instructions
+
   let collect_important ~period ~offset instructions =
     let is_important c = (c - offset) mod period = 0 in
 
-    let rec loop acc x cycle runtime = function
-      | [] -> List.rev acc
-      | current :: rest ->
-          let acc = if is_important cycle then (x * cycle) :: acc else acc in
-          (* GTE just in case... probably won't ever happen though *)
-          let cycle = cycle + 1 in
-          if runtime = instruction_time current then
-            let x = match current with AddX y -> x + y | NoOp -> x in
-            loop acc x cycle 1 rest
-          else loop acc x cycle (runtime + 1) (current :: rest)
-    in
-
-    loop [] 1 0 0 instructions
+    collect_cycles instructions
+    |> Seq.fold_left
+         (fun acc (cycle, x) ->
+           if is_important cycle then (x * cycle) :: acc else acc)
+         []
 end
 
 let part_a ch =
