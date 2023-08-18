@@ -29,14 +29,14 @@ module Grid = struct
       let i = index x y g in
       Some g.data.(i)
 
-  type dir = Top | Right | Bottom | Left
+  type dir = North | East | South | West
 
   let move n dir =
     match dir with
-    | Top -> (0, -n)
-    | Right -> (n, 0)
-    | Bottom -> (0, n)
-    | Left -> (-n, 0)
+    | North -> (0, -n)
+    | East -> (n, 0)
+    | South -> (0, n)
+    | West -> (-n, 0)
 
   let is_hidden x y g =
     let this_h = Option.get (get x y g) in
@@ -49,7 +49,7 @@ module Grid = struct
       | Some h -> if h >= this_h then true else check_dir (i + 1) dir
     in
 
-    [ Top; Right; Bottom; Left ] |> List.for_all (check_dir 1)
+    [ North; East; South; West ] |> List.for_all (check_dir 1)
 
   let scenic_score x y g =
     let this_h = Option.get (get x y g) in
@@ -61,29 +61,21 @@ module Grid = struct
       | Some h -> if h >= this_h then i else score_dir (i + 1) dir
     in
 
-    let scores = [ Top; Right; Bottom; Left ] |> List.map (score_dir 1) in
+    let scores = [ North; East; South; West ] |> List.map (score_dir 1) in
     List.fold_left ( * ) 1 scores
 
+  let seq_of_coords g =
+    Seq.ints 0 |> Seq.take (Array.length g.data) |> Seq.map (fun i -> coord i g)
+
   let best_scenic_score g =
-    Seq.ints 0
-    |> Seq.take (Array.length g.data)
-    |> Seq.fold_left
-         (fun last i ->
-           let x, y = coord i g in
-           let score = scenic_score x y g in
-           if score > last then score else last)
-         0
+    seq_of_coords g
+    |> Seq.map (fun (x, y) -> scenic_score x y g)
+    |> Seq.fold_left max 0
 
   let count_hidden g =
-    Seq.ints 0
-    |> Seq.take (Array.length g.data)
-    |> Seq.fold_left
-         (fun acc i ->
-           let x, y = coord i g in
-           Printf.printf "For coordinate (%d, %d): Hidden = %b\n" x y
-             (is_hidden x y g);
-           match is_hidden x y g with true -> acc + 1 | false -> acc)
-         0
+    seq_of_coords g
+    |> Seq.map (fun (x, y) -> if is_hidden x y g then 1 else 0)
+    |> Seq.fold_left ( + ) 0
 
   let count_visible g =
     let total = Array.length g.data in
@@ -106,7 +98,6 @@ let part_a ch =
   let lines = get_lines ch in
   let grid = Grid.of_lines lines in
 
-  Grid.pp grid;
   let v_count = Grid.count_visible grid in
   print_int v_count;
   print_newline ()
