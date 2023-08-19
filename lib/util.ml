@@ -12,6 +12,31 @@ let identity x = x
 let line_seq chan = Seq.unfold input_line_opt chan
 let get_lines chan = line_seq chan |> List.of_seq
 let get_blob chan = Seq.fold_left ( ^ ) "" (line_seq chan)
+
+let get_chunks chan =
+  let chunks, _ =
+    chan |> line_seq
+    |> Seq.fold_left
+         (fun (acc, lines) line ->
+           match line with
+           | "" ->
+               let curr = String.concat "\n" (List.rev lines) in
+               (curr :: acc, [])
+           | l -> (acc, l :: lines))
+         ([], [])
+  in
+  List.rev chunks
+
+(* let get_chunks chan = *)
+(*   let rec collect_chunk acc ch = *)
+(*     let ret_val () = (List.rev acc, ch) in *)
+(*     match input_line_opt ch with *)
+(*     | None -> ret_val () *)
+(*     | Some (line, ch) -> *)
+(*         if line = "" then ret_val () else collect_chunk (line :: acc) ch *)
+(*   in *)
+(*   Cons (collect_chunk [] ch, fun () -> ) *)
+
 let rec ints_step ?(step = 1) i () = Seq.Cons (i, ints_step (i + step))
 
 let range ?(step = 1) start end_ =

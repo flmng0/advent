@@ -4,14 +4,14 @@ open Util
 
 module Monkey = struct
   type key = string
-  type operation = Add of int | Mul of int
-  type test = Dibivisible of int
+  type value = Self | Num of int
+  type operation = Add of value | Mul of value
 
   type t = {
     mutable inspections : int;
-    mutable items : int Queue.t;
+    items : int Queue.t;
     op : operation;
-    test : test;
+    test : int;
     success : key;
     failure : key;
   }
@@ -37,11 +37,95 @@ module Monkey = struct
     to monkey with key "failure"
   *)
 
-  (* let of_lines l = *)
-  (*   let key = Scanf.sscanf (List.hd l) "Monkey %d:" identity in *)
-  (*   let items = Scanf.sscanf () *)
-  (*   (key, monkey) *)
+  let parse_op op_op op_v =
+    let v = match op_v with "old" -> Self | n -> Num (int_of_string n) in
+    match op_op with
+    | '*' -> Mul v
+    | '+' -> Add v
+    | _ -> invalid_arg "Unexpected operator"
+
+  let of_string s =
+    let create key items op_op op_v test success failure =
+      let inspections = 0 in
+      let items =
+        items |> String.split_on_char ','
+        |> List.map (fun i -> String.trim i |> int_of_string)
+        |> List.to_seq |> Queue.of_seq
+      in
+      let op = parse_op op_op op_v in
+
+      let monkey = { inspections; items; op; test; success; failure } in
+
+      (key, monkey)
+    in
+
+    Scanf.sscanf s
+      {|Monkey %s@:
+  Starting items: %[0-9, ]
+  Operation: new = old %c %[0-9(old)]
+  Test: divisible by %d
+    If true: throw to monkey %s
+    If false: throw to monkey %s|}
+      create
+
+  let catch item m = Queue.add item m.items
+
+  let apply_op op item =
+    let num = function Self -> item | Num n -> n in
+    match op with Add v -> item + num v | Mul v -> item * num v
+
+  let take_turn m =
+    let inspect item =
+      m.inspections <- m.inspections + 1;
+      apply_op m.op item
+    in
+
+    let get_bored item = item / 3 in
+
+    let test item = item mod m.test = 0 in
+
+    let rec loop acc =
+      match Queue.take_opt m.items with
+      | Some item ->
+          let item = item |> inspect |> get_bored in
+          let target = if test item then m.success else m.failure in
+          loop ((target, item) :: acc)
+      | None -> List.rev acc
+    in
+
+    loop []
 end
 
-let part_a _ch = ()
+module StringMap = Map.Make (String)
+
+let run_round monkeys =
+  StringMap.iter
+    (fun _ m ->
+      let thrown = Monkey.take_turn m in
+      List.iter
+        (fun (target, item) ->
+          StringMap.find target monkeys |> Monkey.catch item)
+        thrown)
+    monkeys
+
+let part_a ch =
+  let open Monkey in
+  let monkeys =
+    get_chunks ch |> List.map Monkey.of_string |> List.to_seq
+    |> StringMap.of_seq
+  in
+
+  for _ = 0 to 20 do
+    run_round monkeys
+  done;
+
+  let top_two =
+    StringMap.bindings monkeys
+    |> List.map (fun (_, m) -> m.inspections)
+    |> List.sort Stdlib.compare |> List.to_seq |> Seq.take 2
+  in
+  Seq.iter (Printf.printf "%d\n") top_two
+
+(* StringMap.to_seq |> Seq.map (fun k m -> (m.inspections, k)) |> List.of_seq |> List.sort (fun (ai, _) (bi, _) -> Stdlib.compare ai bi) |> List.to_seq |> Seq.take 2 |> Seq.map () *)
+
 let part_b _ch = ()
