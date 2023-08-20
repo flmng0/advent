@@ -15,6 +15,18 @@ module Monkey = struct
     success : key;
     failure : key;
   }
+
+  let pp_op op =
+    let pp_v = function
+    | Self -> "old"
+    | Num i -> string_of_int i
+    in
+    match op with
+    | Add v -> "+ " ^ (pp_v v)
+    | Mul v -> "* " ^ (pp_v v)
+  let pp m =
+    let items = Queue.to_seq |> List.of_seq |> String.concat ", " in
+    
   (*
     Each monkey keeps track of its current items.
 
@@ -55,7 +67,6 @@ module Monkey = struct
       let op = parse_op op_op op_v in
 
       let monkey = { inspections; items; op; test; success; failure } in
-
       (key, monkey)
     in
 
@@ -115,16 +126,17 @@ let part_a ch =
     |> StringMap.of_seq
   in
 
-  for _ = 0 to 20 do
+  for _ = 1 to 20 do
     run_round monkeys
   done;
 
   let top_two =
     StringMap.bindings monkeys
     |> List.map (fun (_, m) -> m.inspections)
-    |> List.sort Stdlib.compare |> List.to_seq |> Seq.take 2
+    |> List.sort Stdlib.compare |> List.rev |> List.to_seq |> Seq.take 2
   in
-  Seq.iter (Printf.printf "%d\n") top_two
+  let monkey_business = Seq.fold_left ( * ) 1 top_two in
+  Printf.printf "Monkey business: %d\n" monkey_business
 
 (* StringMap.to_seq |> Seq.map (fun k m -> (m.inspections, k)) |> List.of_seq |> List.sort (fun (ai, _) (bi, _) -> Stdlib.compare ai bi) |> List.to_seq |> Seq.take 2 |> Seq.map () *)
 
