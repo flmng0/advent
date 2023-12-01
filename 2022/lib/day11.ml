@@ -1,3 +1,4 @@
+(*
 let day = 11
 
 open Util
@@ -141,3 +142,4 @@ let part_a ch =
 (* StringMap.to_seq |> Seq.map (fun k m -> (m.inspections, k)) |> List.of_seq |> List.sort (fun (ai, _) (bi, _) -> Stdlib.compare ai bi) |> List.to_seq |> Seq.take 2 |> Seq.map () *)
 
 let part_b _ch = ()
+*)
