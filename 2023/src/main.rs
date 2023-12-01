@@ -3,7 +3,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(value_parser = clap::value_parser!(u16).range(1..=25))]
+    #[arg(value_parser = clap::value_parser!(i32).range(1..=25))]
     day: i32,
 
     #[arg(value_enum, short, long, default_value_t)]
