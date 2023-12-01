@@ -19,7 +19,7 @@ let () =
   let input =
     if !use_stdin then stdin
     else
-      let path = Printf.sprintf "../inputs/day%d.txt" !day in
+      let path = Printf.sprintf "../inputs/2022/day%d.txt" !day in
       open_in path
   in
   let b_side = !b_side in
