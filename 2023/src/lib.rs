@@ -6,13 +6,17 @@ mod day3;
 mod day4;
 
 trait Solver {
+    fn new() -> Self
+    where
+        Self: Sized;
+
     fn part_a(&self, input: String) -> String;
     fn part_b(&self, input: String) -> String;
 }
 
 macro_rules! day {
     ($mod: ident) => {
-        Some(Box::new($mod::init()))
+        Some(Box::new($mod::Impl::new()))
     };
 }
 

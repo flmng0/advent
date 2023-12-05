@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use crate::Solver;
 
 pub struct Day3;
+pub type Impl = Day3;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 struct Number {
@@ -72,6 +73,10 @@ impl Board {
 }
 
 impl Solver for Day3 {
+    fn new() -> Self {
+        Self
+    }
+
     fn part_a(&self, input: String) -> String {
         let board = Board::parse(input);
 
@@ -114,7 +119,7 @@ impl Solver for Day3 {
 
         let mut total = 0;
 
-        for symbol in board.symbols {
+        for symbol in board.symbols.iter().filter(|s| s.value == '*') {
             let mut touching = HashSet::new();
             let boundary = boundary.map(|(dx, dy)| (symbol.x + dx, symbol.y + dy));
 
@@ -134,10 +139,6 @@ impl Solver for Day3 {
 
         format!("{total}")
     }
-}
-
-pub fn init() -> Day3 {
-    Day3
 }
 
 #[cfg(test)]

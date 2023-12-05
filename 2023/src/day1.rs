@@ -1,10 +1,11 @@
-use std::ops::Index;
+pub struct Day1;
+pub type Impl = Day1;
 
-use crate::Solver;
+impl crate::Solver for Day1 {
+    fn new() -> Self {
+        Self
+    }
 
-struct Day1;
-
-impl Solver for Day1 {
     fn part_a(&self, input: String) -> String {
         let lines = input.split_terminator('\n');
 
@@ -110,13 +111,10 @@ impl Solver for Day1 {
     }
 }
 
-pub fn init() -> impl Solver {
-    Day1
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Solver;
 
     #[test]
     fn day1_a() {
@@ -127,7 +125,7 @@ treb7uchet
 "#
         .to_string();
 
-        let solver = Day1;
+        let solver = Day1::new();
         let out = solver.part_a(input);
 
         assert_eq!(out, "142".to_string());
@@ -146,7 +144,7 @@ zoneight234
 "#
         .to_string();
 
-        let solver = Day1;
+        let solver = Day1::new();
         let out = solver.part_b(input);
 
         assert_eq!(out, "356".to_string());

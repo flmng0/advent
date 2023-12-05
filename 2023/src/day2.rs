@@ -1,6 +1,7 @@
 use crate::Solver;
 
 pub struct Day2;
+pub type Impl = Day2;
 
 #[derive(Default, Debug)]
 struct Round {
@@ -57,6 +58,10 @@ impl Game {
 }
 
 impl Solver for Day2 {
+    fn new() -> Self {
+        Self
+    }
+
     fn part_a(&self, input: String) -> String {
         let games = input.split_terminator('\n').map(Game::parse);
 
@@ -92,10 +97,6 @@ impl Solver for Day2 {
 
         format!("{total}")
     }
-}
-
-pub fn init() -> Day2 {
-    Day2
 }
 
 #[cfg(test)]

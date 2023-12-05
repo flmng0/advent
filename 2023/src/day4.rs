@@ -1,8 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use rayon::str::ParallelString;
-
 pub struct Day4;
+pub type Impl = Day4;
 
 #[derive(Debug)]
 struct Card {
@@ -44,6 +43,10 @@ impl Card {
 }
 
 impl crate::Solver for Day4 {
+    fn new() -> Self {
+        Self
+    }
+
     fn part_a(&self, input: String) -> String {
         let cards = input.split_terminator('\n').map(Card::parse);
 
@@ -87,10 +90,6 @@ impl crate::Solver for Day4 {
     }
 }
 
-pub fn init() -> Day4 {
-    Day4
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -108,7 +107,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
         .to_string();
         let output = "13".to_string();
 
-        let solver = init();
+        let solver = Day4::new();
         let result = solver.part_a(input);
 
         assert_eq!(result, output);
@@ -126,7 +125,7 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
         .to_string();
         let output = "30".to_string();
 
-        let solver = init();
+        let solver = Day4::new();
         let result = solver.part_b(input);
 
         assert_eq!(result, output);
