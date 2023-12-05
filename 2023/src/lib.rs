@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 mod day1;
 mod day2;
+mod day3;
 
 trait Solver {
     fn part_a(&self, input: String) -> String;
@@ -18,6 +19,7 @@ fn get_solver(day: i32) -> Option<Box<dyn Solver>> {
     match day {
         1 => day!(day1),
         2 => day!(day2),
+        3 => day!(day3),
         _ => None,
     }
 }
