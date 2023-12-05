@@ -4,6 +4,7 @@ mod day1;
 mod day2;
 mod day3;
 mod day4;
+mod day5;
 
 trait Solver {
     fn new() -> Self
@@ -26,6 +27,7 @@ fn get_solver(day: i32) -> Option<Box<dyn Solver>> {
         2 => day!(day2),
         3 => day!(day3),
         4 => day!(day4),
+        5 => day!(day5),
         _ => None,
     }
 }
