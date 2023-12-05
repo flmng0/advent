@@ -63,7 +63,7 @@ impl crate::Solver for Day1 {
 
             for (val, start, _stop) in found_words.clone() {
                 first = match first {
-                    Some((i, v)) => {
+                    Some((i, _v)) => {
                         if start >= i {
                             break;
                         }
@@ -86,7 +86,7 @@ impl crate::Solver for Day1 {
 
             for (val, _start, stop) in found_words_rev.clone() {
                 last = match last {
-                    Some((i, v)) => {
+                    Some((i, _v)) => {
                         if stop < i + 1 {
                             break;
                         }
