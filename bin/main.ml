@@ -1,4 +1,4 @@
-let year = ref 2022
+let year = ref 2023
 let day = ref 1
 let b_side = ref false
 let use_stdin = ref false
@@ -19,12 +19,12 @@ let () =
   let input =
     if !use_stdin then stdin
     else
-      let path = Printf.sprintf "inputs/day%d.txt" !day in
+      let path = Printf.sprintf "inputs/%d/day%d.txt" !year !day in
       open_in path
   in
   let b_side = !b_side in
 
-  Advent.solve !day ~input ~b_side;
+  Advent.solve !year !day ~input ~b_side;
   close_in input;
 
   ()

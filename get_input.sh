@@ -1,12 +1,12 @@
 #!/usr/bin/bash
 
-OUT_DIR="inputs"
-[ -d $OUT_DIR ] || mkdir $OUT_DIR
-
 DAY=$1
-
 YEAR=$2
-[ -z "$YEAR" ] && YEAR="2022"
+[ -z "$YEAR" ] && YEAR="2023"
+
+BASE_DIR="inputs"
+
+[ -d "$BASE_DIR/$YEAR" ] || mkdir -p "$BASE_DIR/$YEAR"
 
 if [ -z "$ADVENT_SESSION" ]; then
 	echo "Make sure to set ADVENT_SESSION"
@@ -16,4 +16,4 @@ fi
 curl https://adventofcode.com/"$YEAR"/day/"$DAY"/input \
 	--silent \
 	--cookie session=$ADVENT_SESSION \
-	--output "$OUT_DIR/day$DAY.txt"
+	--output "$BASE_DIR/$YEAR/day$DAY.txt"

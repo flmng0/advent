@@ -1,0 +1,3 @@
+(library
+ (libraries year2022 year2023)
+ (name advent))

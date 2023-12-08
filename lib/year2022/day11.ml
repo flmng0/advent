@@ -1,5 +1,6 @@
 let day = 11
 
+(*
 open Util
 
 module Monkey = struct
@@ -25,7 +26,7 @@ module Monkey = struct
     | Add v -> "+ " ^ (pp_v v)
     | Mul v -> "* " ^ (pp_v v)
   let pp m =
-    let items = Queue.to_seq |> List.of_seq |> String.concat ", " in
+    let items = Queue.to_seq |> List.of_seq |> String.concat ", " in ()
     
   (*
     Each monkey keeps track of its current items.
@@ -141,3 +142,4 @@ let part_a ch =
 (* StringMap.to_seq |> Seq.map (fun k m -> (m.inspections, k)) |> List.of_seq |> List.sort (fun (ai, _) (bi, _) -> Stdlib.compare ai bi) |> List.to_seq |> Seq.take 2 |> Seq.map () *)
 
 let part_b _ch = ()
+*)
