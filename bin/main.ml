@@ -11,10 +11,13 @@ let speclist =
     ("-stdin", Arg.Set use_stdin, "Use stdin for the input values");
   ]
 
+let anon_fun d =
+  day := int_of_string d
+
 let usage_msg = "advent [-year <year>] [-b] [-stdin] <day>"
 
 let () =
-  Arg.parse speclist ignore usage_msg;
+  Arg.parse speclist anon_fun usage_msg;
 
   let input =
     if !use_stdin then stdin

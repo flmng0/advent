@@ -84,7 +84,7 @@ let part_b input =
 
   Int.to_string total
 
-let%test_module "day 5" =
+let%test_module "day 1" =
   (module struct
     let input_a = {|1abc2
 pqr3stu8vwx
