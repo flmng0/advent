@@ -1,2 +1,5 @@
 (library
- (name year2023))
+ (name year2023)
+ (libraries base stdio)
+ (preprocess (pps ppx_inline_test ppx_assert))
+ (inline_tests))

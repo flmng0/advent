@@ -1,4 +1,4 @@
-/inputs/*.txt
+/inputs/**/*.txt
 
 
 *.annot
