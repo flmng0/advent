@@ -86,9 +86,6 @@ let part_a input =
     |> Set.stable_dedup_list (module Num)
   in
 
-  Stdio.printf "Parts found: %s\n"
-    (List.map parts ~f:Board.show_num |> String.concat ~sep:", ");
-
   let total = List.fold ~init:0 ~f:(fun acc num -> acc + num.nval) parts in
 
   Int.to_string total
