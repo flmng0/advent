@@ -10,3 +10,6 @@ let strip_trail lines =
 let lines_of_string ?(include_trail = false) data =
   let all = String.split ~on:'\n' data in
   if include_trail then all else strip_trail all
+
+let read_nums text =
+  text |> String.split ~on:' ' |> List.filter_map ~f:Int.of_string_opt
