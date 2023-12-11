@@ -1,7 +1,7 @@
 open Util
 open Base
 
-module DesertMap = struct
+module DMap = struct
   type t = { dirs : dir list; nodes : node_map }
   and dir = Left | Right
   and node_map = (string * string) Map.M(String).t
@@ -13,6 +13,8 @@ module DesertMap = struct
     let name, dirs = String.lsplit2_exn ~on:'=' s in
     let left, right = String.lsplit2_exn dirs ~on:',' in
 
+    let name = String.strip name in
+
     let left =
       String.strip left ~drop:(fun c -> Char.(is_whitespace c || c = '('))
     in
@@ -21,6 +23,8 @@ module DesertMap = struct
     in
 
     (name, (left, right))
+
+  let dir_seq s = Sequence.cycle_list_exn s.dirs
 
   let of_string s =
     match lines_of_string s with
@@ -38,17 +42,34 @@ end
 let day = 8
 
 let part_a input =
-  let map = DesertMap.of_string input in
+  let map = DMap.of_string input in
+  let dirs = DMap.dir_seq map in
 
-  Stdio.print_endline (map.dirs |> List.map ~f:DesertMap.char_of_dir |> String.of_list);
+  let rec walk steps (node_l, node_r) dirs =
+    match Sequence.next dirs with
+    | Some (dir, dirs) ->
+        let next_node =
+          DMap.(match dir with Left -> node_l | Right -> node_r)
+        in
 
-  ""
+        if String.(next_node = "ZZZ") then steps + 1
+        else
+          let node = DMap.(Map.find_exn map.nodes next_node) in
+          walk (steps + 1) node dirs
+    | None -> invalid_arg "ran out of dirs in an infinite sequence??"
+  in
+
+  let node = Map.find_exn map.nodes "AAA" in
+  let steps = walk 0 node dirs in
+
+  Int.to_string steps
 
 let part_b _input = ""
 
 let%test_module "day 8" =
   (module struct
-    let input = {|RL
+    let input =
+      {|RL
 
 AAA = (BBB, CCC)
 BBB = (DDD, EEE)
@@ -58,6 +79,18 @@ EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)
 |}
-    let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:""
+
+    let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:"2"
+
+    let%test_unit "part a alt" =
+      [%test_result: string]
+        (part_a {|LLR
+
+AAA = (BBB, BBB)
+BBB = (AAA, ZZZ)
+ZZZ = (ZZZ, ZZZ)
+|})
+        ~expect:"6"
+
     let%test_unit "part b" = [%test_result: string] (part_b input) ~expect:""
   end)
