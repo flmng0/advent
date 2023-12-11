@@ -5,7 +5,9 @@ let () =
   Solver.add (module Day1);
   Solver.add (module Day2);
   Solver.add (module Day3);
-  Solver.add (module Day4)
+  Solver.add (module Day4);
+  Solver.add (module Day5);
+  ()
 
 let solve ?(input = stdin) ?(b_side = false) day =
   let part_string = if b_side then "B" else "A" in

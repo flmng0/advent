@@ -23,7 +23,9 @@ let chunks_of_string data =
             let chunk = List.rev current |> String.concat_lines in
             loop (chunk :: acc) [] rest
         | line -> loop acc (line :: current) rest)
-    | [] -> List.rev acc
+    | [] -> 
+        let chunk = List.rev current |> String.concat_lines in
+        List.rev (chunk :: acc)
   in
 
   let lines = String.split_lines data in
