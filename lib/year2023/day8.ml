@@ -68,26 +68,27 @@ let part_b input =
   let map = DMap.of_string input in
   let dirs = DMap.dir_seq map in
 
-  let rec walk steps nodes dirs =
+  let rec walk steps (node_l, node_r) dirs =
     match Sequence.next dirs with
     | Some (dir, dirs) ->
-        let node_dir = DMap.(match dir with Left -> fst | Right -> snd) in
-        let next_nodes = List.map ~f:node_dir nodes in
+        let next_node =
+          DMap.(match dir with Left -> node_l | Right -> node_r)
+        in
 
-        if List.for_all next_nodes ~f:(String.is_suffix ~suffix:"Z") then steps + 1
+        if String.is_suffix ~suffix:"Z" next_node then steps + 1
         else
-          let nodes = List.map ~f:(Map.find_exn map.nodes) next_nodes in
-          walk (steps + 1) nodes dirs
+          let node = DMap.(Map.find_exn map.nodes next_node) in
+          walk (steps + 1) node dirs
     | None -> invalid_arg "ran out of dirs in an infinite sequence??"
   in
 
-  let nodes =
+  let all_steps =
     Map.to_alist map.nodes
     |> List.filter_map ~f:(fun (name, node) ->
-           if String.is_suffix ~suffix:"A" name then Some node else None)
-  in
+  if String.is_suffix ~suffix:"A" name then Some (walk 0 node dirs) else None
+) in
 
-  let steps = walk 0 nodes dirs in
+  let steps = lcm all_steps in
 
   Int.to_string steps
 

@@ -13,7 +13,8 @@ let lines_of_string ?(include_trail = false) data =
   if include_trail then all else strip_trail all
 
 let read_nums text =
-  text |> String.split ~on:' ' |> List.filter_map ~f:(fun t -> String.strip t |> Int.of_string_opt)
+  text |> String.split ~on:' '
+  |> List.filter_map ~f:(fun t -> String.strip t |> Int.of_string_opt)
 
 let chunks_of_string data =
   let rec loop acc current = function
@@ -23,7 +24,7 @@ let chunks_of_string data =
             let chunk = List.rev current |> String.concat_lines in
             loop (chunk :: acc) [] rest
         | line -> loop acc (line :: current) rest)
-    | [] -> 
+    | [] ->
         let chunk = List.rev current |> String.concat_lines in
         List.rev (chunk :: acc)
   in
@@ -31,3 +32,40 @@ let chunks_of_string data =
   let lines = String.split_lines data in
   loop [] [] lines
 
+let prime_decomp n =
+  let rec prime_decomp' c p =
+    if p < c * c then [ p ]
+    else if Int.rem p c = 0 then c :: prime_decomp' c (p / c)
+    else prime_decomp' (c + 1) p
+  in
+  prime_decomp' 2 n
+
+let hit_count cmp vals =
+  List.fold vals ~init:(Map.empty cmp)
+    ~f:(Map.update ~f:(function Some n -> n + 1 | None -> 1))
+
+let lcm vals =
+  let f acc v =
+    let hits = hit_count (module Int) (prime_decomp v) in
+    Map.merge_skewed acc hits ~combine:(fun ~key a b -> ignore key; max a b)
+  in
+  let primes = List.fold vals ~init:(Map.empty (module Int)) ~f in
+  Map.fold primes ~init:1 ~f:(fun ~key ~data acc -> (key ** data) * acc)
+
+module IntPair = struct
+  module T = struct
+    type t = int * int [@@deriving compare, sexp_of]
+  end
+
+  include T
+  include Comparator.Make (T)
+end
+
+let%test_unit "prime_decomp" =
+  [%test_result: int list] (prime_decomp 12) ~expect:[ 2; 2; 3 ]
+
+let%test_unit "lcm two" =
+  [%test_result: int] (lcm [12; 18]) ~expect:36
+
+let%test_unit "lcm many" =
+  [%test_result: int] (lcm [10; 16; 24; 85]) ~expect:4080
