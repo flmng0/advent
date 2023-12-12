@@ -11,6 +11,7 @@ let () =
   Solver.add (module Day7);
   Solver.add (module Day8);
   Solver.add (module Day9);
+  Solver.add (module Day10);
   ()
 
 let solve ?(input = stdin) ?(b_side = false) day =
