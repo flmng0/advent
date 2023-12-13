@@ -47,25 +47,73 @@ let hit_count cmp vals =
 let lcm vals =
   let f acc v =
     let hits = hit_count (module Int) (prime_decomp v) in
-    Map.merge_skewed acc hits ~combine:(fun ~key a b -> ignore key; max a b)
+    Map.merge_skewed acc hits ~combine:(fun ~key a b ->
+        ignore key;
+        max a b)
   in
   let primes = List.fold vals ~init:(Map.empty (module Int)) ~f in
   Map.fold primes ~init:1 ~f:(fun ~key ~data acc -> (key ** data) * acc)
 
 module IntPair = struct
   module T = struct
-    type t = int * int [@@deriving compare, sexp_of]
+    type t = int * int [@@deriving equal, compare, sexp_of]
   end
 
   include T
   include Comparator.Make (T)
 end
 
+module Vector = struct
+  open Float
+
+  type t = { x : float; y : float }
+
+  (* Constructors *)
+  let zero = { x = 0.0; y = 0.0 }
+  let unit_x = { x = 1.0; y = 0.0 }
+  let unit_x_neg = { x = -1.0; y = 0.0 }
+  let unit_y = { x = 0.0; y = 1.0 }
+  let unit_y_neg = { x = 0.0; y = -1.0 }
+  let of_xy x y = { x; y }
+  let of_int_xy x y = { x = of_int x; y = of_int y }
+
+  let of_point p =
+    let x, y = p in
+    of_xy x y
+
+  let of_int_point p =
+    let x, y = p in
+    of_int_xy x y
+
+  (* Operator functions *)
+  let add v w = { x = v.x + w.x; y = v.y + w.y }
+  let sub v w = { x = v.x - w.x; y = v.y - w.y }
+  let neg v = { x = -v.x; y = -v.y }
+  let mul v m = { x = v.x * m; y = v.y * m }
+  let div v m = { x = v.x / m; y = v.y / m }
+
+  (* Methods *)
+  let length_sq v = (v.x * v.x) + (v.y * v.y)
+  let length v = length_sq v |> sqrt
+
+  let normal v =
+    let l = length v in
+    div v l
+
+  let with_length v l = mul (normal v) l
+
+  (* Operators *)
+  let ( + ) v w = add v w
+  let ( - ) v w = sub v w
+  let ( ~- ) v = neg v
+  let ( * ) v m = mul v m
+  let ( / ) v m = div v m
+end
+
 let%test_unit "prime_decomp" =
   [%test_result: int list] (prime_decomp 12) ~expect:[ 2; 2; 3 ]
 
-let%test_unit "lcm two" =
-  [%test_result: int] (lcm [12; 18]) ~expect:36
+let%test_unit "lcm two" = [%test_result: int] (lcm [ 12; 18 ]) ~expect:36
 
 let%test_unit "lcm many" =
-  [%test_result: int] (lcm [10; 16; 24; 85]) ~expect:4080
+  [%test_result: int] (lcm [ 10; 16; 24; 85 ]) ~expect:4080
