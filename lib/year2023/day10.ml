@@ -83,7 +83,7 @@ module Pipes = struct
       match travel p prev pos with
       | Some next ->
           if idx_opt p next |> Option.is_none then None
-          else if IntPair.compare start next = 0 then Some path
+          else if IntPair.compare start next = 0 then Some (pos :: path)
           else walk (pos :: path) next pos
       | None -> None
     in
@@ -92,7 +92,6 @@ module Pipes = struct
     |> List.find_map ~f:(fun (dx, dy) ->
            let sx, sy = start in
            walk [ start ] (sx + dx, sy + dy) start)
-    |> Option.map ~f:(List.cons start)
 
   let diff a b =
     let x1, y1 = a in
@@ -100,8 +99,10 @@ module Pipes = struct
     (x2 - x1, y2 - y1)
 
   let get_inside p loop =
+    let loop_set = Set.of_list (module IntPair) loop in
+
     let top, bottom, left, right =
-      List.fold loop ~init:(p.width, -1, p.height, -1)
+      Set.fold loop_set ~init:(p.width, -1, p.height, -1)
         ~f:(fun (t, b, l, r) (x, y) -> (min t y, max b y, min l x, max r x))
     in
     let iw, ih = (bottom - top, right - left) in
@@ -114,6 +115,7 @@ module Pipes = struct
       in
       let (x1, y1), (x2, y2) = (a, b) in
 
+      (*
       let f =
         match (compare x1 x2, compare y1 y2) with
         | 0, 0 -> invalid_arg "2 consecutive points are equal?"
@@ -123,15 +125,49 @@ module Pipes = struct
         | dx, 0 ->
             if dx > 0 then fun (x, y) -> y < y1 && x = x1
             else fun (x, y) -> y > y1 && x = x1
-        | _ -> 
-          let msg = Printf.sprintf "2 consecutive points don't have an equal? Got points: %i %i, %i %i" x1 y1 x2 y2 in
-          invalid_arg msg
+        | _ ->
+            let msg =
+              Printf.sprintf
+                "2 consecutive points don't have an equal? Got points: %i %i, \
+                 %i %i"
+                x1 y1 x2 y2
+            in
+            invalid_arg msg
+      in
+      *)
+      let intersections =
+        let start, stop, f =
+          match (compare x1 x2, compare y1 y2) with
+          | 0, 0 -> invalid_arg "2 consecutive points are equal?"
+          | 0, dy -> (
+              let start, stop = if dy > 0 then (left, x1) else (x1, right) in
+              ( start,
+                stop,
+                fun x ->
+                  let coord = (x, y1) in
+                  match p.tiles.(idx p coord) with H -> false | _ -> true ))
+          | dx, 0 -> (
+              let start, stop = if dx > 0 then (y1, bottom) else (top, y1) in
+              ( start,
+                stop,
+                fun y ->
+                  let coord = (x1, y) in
+                  match p.tiles.(idx p coord) with V -> false | _ -> true ))
+          | _ ->
+              let msg =
+                Printf.sprintf
+                  "2 consecutive points don't have an equal? Got points: %i \
+                   %i, %i %i"
+                  x1 y1 x2 y2
+              in
+              invalid_arg msg
+        in
+
+        Sequence.range start stop |> Sequence.count ~f
       in
 
-      let intersections = List.count loop ~f in
-
       let open Int in
-      if rem intersections 2 = 0 then fun (x, y) ->
+      if rem intersections 2 = 1 then fun (x, y) ->
         let x', y' = (y, -x) in
         Sign.(to_int (sign x'), to_int (sign y'))
       else fun (x, y) ->
@@ -139,27 +175,28 @@ module Pipes = struct
         Sign.(to_int (sign x'), to_int (sign y'))
     in
 
-    let flood loop_set seed =
+    let flood seed =
       let neighs (x1, y1) =
         List.map cardinal ~f:(fun (x2, y2) -> (x1 + x2, y1 + y2))
       in
-      let inside coord = not (Set.mem loop_set coord) in
 
       let q = Queue.create ~capacity:(iw * ih) () in
 
       let rec flood' found =
+        let inside coord =
+          not (Set.mem loop_set coord || Set.mem found coord)
+        in
         match Queue.dequeue q with
         | Some n ->
-            if inside n then (
-              Queue.enqueue_all q (neighs n);
-              let found = Set.add found n in
-              flood' found)
-            else flood' found
+            let ns = neighs n in
+            List.filter ns ~f:inside |> Queue.enqueue_all q;
+            let found = Set.add found n in
+            flood' found
         | None -> found
       in
 
-      let found = Set.add (Set.empty (module IntPair)) seed in
-      flood' found
+      Queue.enqueue q seed;
+      flood' (Set.empty (module IntPair))
     in
 
     let rec get_inside' acc prev loop =
@@ -171,11 +208,10 @@ module Pipes = struct
           let x, y = curr in
           let adj = (x + dx, y + dy) in
 
-          if List.mem loop adj ~equal:IntPair.equal || Set.mem acc adj then
+          if Set.mem loop_set adj || Set.mem acc adj then
             get_inside' acc curr loop
           else
-            let loop_set = Set.of_list (module IntPair) loop in
-            let found = flood loop_set adj in
+            let found = flood adj in
             let acc = Set.union found acc in
             get_inside' acc curr loop
       | [] -> acc
@@ -223,9 +259,25 @@ let part_b input =
   let p = Pipes.of_string input in
   let loop = Pipes.get_loop p |> Option.value_exn in
 
-  List.iter ~f:(fun (x, y) -> Stdio.printf "%i %i\n" x y) loop;
-
   let enclosed = Pipes.get_inside p loop in
+
+  let () =
+    Stdio.print_endline "Printing found chars:";
+    let open Pipes in
+    let str = to_string p in
+    let chars = String.to_array str in
+    List.iter enclosed ~f:(fun (x, y) ->
+        let i = x + (y * (p.width + 1)) in
+        chars.(i) <- '#');
+    Stdio.print_endline (chars |> String.of_array);
+
+    Stdio.print_endline "Printing loop chars:";
+    let chars = String.to_array str in
+    List.iter loop ~f:(fun (x, y) ->
+        let i = x + (y * (p.width + 1)) in
+        chars.(i) <- '#');
+    Stdio.print_endline (chars |> String.of_array)
+  in
 
   List.length enclosed |> Int.to_string
 
@@ -245,7 +297,8 @@ LJ...
 
     let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:"8"
 
-    let _input_b1 = {|...........
+    let input_b1 =
+      {|...........
 .S-------7.
 .|F-----7|.
 .||.....||.
@@ -255,7 +308,12 @@ LJ...
 .L--J.L--J.
 ...........
 |}
-    let input_b2 = {|.F----7F7F7F7F-7....
+
+    let%test_unit "part b 1" =
+      [%test_result: string] (part_b input_b1) ~expect:"4"
+
+    let input_b2 =
+      {|.F----7F7F7F7F-7....
 .|F--7||||||||FJ....
 .||.FJ||||||||L7....
 FJL7L7LJLJ||LJ.L-7..
@@ -266,7 +324,12 @@ L--J.L7...LJS7F-7L7.
 ....FJL-7.||.||||...
 ....L---J.LJ.LJLJ...
 |}
-    let _input_b3 = {|FF7FSF7F7F7F7F7F---7
+
+    let%test_unit "part b 2" =
+      [%test_result: string] (part_b input_b2) ~expect:"8"
+
+    let input_b3 =
+      {|FF7FSF7F7F7F7F7F---7
 L|LJ||||||||||||F--J
 FL-7LJLJ||||||LJL-77
 F--JF--7||LJLJ7F7FJ-
@@ -277,10 +340,7 @@ L---JF-JLJ.||-FJLJJ7
 L.L7LFJ|||||FJL7||LJ
 L7JLJL-JLJLJL--JLJ.L
 |}
-    (* 
-    let%test_unit "part b 1" = [%test_result: string] (part_b input_b1) ~expect:"4"
-    let%test_unit "part b 3" = [%test_result: string] (part_b input_b3) ~expect:"10"
-*)
-    let%test_unit "part b 2" = [%test_result: string] (part_b input_b2) ~expect:"8"
 
+    let%test_unit "part b 3" =
+      [%test_result: string] (part_b input_b3) ~expect:"10"
   end)
