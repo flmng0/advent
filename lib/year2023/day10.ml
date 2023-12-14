@@ -115,44 +115,24 @@ module Pipes = struct
       in
       let (x1, y1), (x2, y2) = (a, b) in
 
-      (*
-      let f =
-        match (compare x1 x2, compare y1 y2) with
-        | 0, 0 -> invalid_arg "2 consecutive points are equal?"
-        | 0, dy ->
-            if dy > 0 then fun (x, y) -> x > x1 && y = y1
-            else fun (x, y) -> x < x1 && y = y1
-        | dx, 0 ->
-            if dx > 0 then fun (x, y) -> y < y1 && x = x1
-            else fun (x, y) -> y > y1 && x = x1
-        | _ ->
-            let msg =
-              Printf.sprintf
-                "2 consecutive points don't have an equal? Got points: %i %i, \
-                 %i %i"
-                x1 y1 x2 y2
-            in
-            invalid_arg msg
-      in
-      *)
       let intersections =
         let start, stop, f =
           match (compare x1 x2, compare y1 y2) with
           | 0, 0 -> invalid_arg "2 consecutive points are equal?"
-          | 0, dy -> (
+          | 0, dy ->
               let start, stop = if dy > 0 then (left, x1) else (x1, right) in
-              ( start,
-                stop,
-                fun x ->
-                  let coord = (x, y1) in
-                  match p.tiles.(idx p coord) with H -> false | _ -> true ))
-          | dx, 0 -> (
+              let f x =
+                let coord = (x, y1) in
+                match p.tiles.(idx p coord) with H -> false | _ -> true
+              in
+              (start, stop, f)
+          | dx, 0 ->
               let start, stop = if dx > 0 then (y1, bottom) else (top, y1) in
-              ( start,
-                stop,
-                fun y ->
-                  let coord = (x1, y) in
-                  match p.tiles.(idx p coord) with V -> false | _ -> true ))
+              let f y =
+                let coord = (x1, y) in
+                match p.tiles.(idx p coord) with V -> false | _ -> true
+              in
+              (start, stop, f)
           | _ ->
               let msg =
                 Printf.sprintf
@@ -176,10 +156,6 @@ module Pipes = struct
     in
 
     let flood seed =
-      let neighs (x1, y1) =
-        List.map cardinal ~f:(fun (x2, y2) -> (x1 + x2, y1 + y2))
-      in
-
       let q = Queue.create ~capacity:(iw * ih) () in
 
       let rec flood' found =
@@ -187,16 +163,23 @@ module Pipes = struct
           not (Set.mem loop_set coord || Set.mem found coord)
         in
         match Queue.dequeue q with
-        | Some n ->
-            let ns = neighs n in
-            List.filter ns ~f:inside |> Queue.enqueue_all q;
-            let found = Set.add found n in
+        | Some (x1, y1) ->
+            let ns =
+              List.filter_map cardinal ~f:(fun (x2, y2) ->
+                  let coord = (x1 + x2, y1 + y2) in
+                  if inside coord then Some coord else None)
+            in
+            Queue.enqueue_all q ns;
+
+            let ns_set = Set.of_list (module IntPair) ns in
+            let found = Set.union found ns_set in
+
             flood' found
         | None -> found
       in
 
       Queue.enqueue q seed;
-      flood' (Set.empty (module IntPair))
+      flood' (Set.singleton (module IntPair) seed)
     in
 
     let rec get_inside' acc prev loop =
@@ -208,8 +191,7 @@ module Pipes = struct
           let x, y = curr in
           let adj = (x + dx, y + dy) in
 
-          if Set.mem loop_set adj || Set.mem acc adj then
-            get_inside' acc curr loop
+          if Set.mem acc adj then get_inside' acc curr loop
           else
             let found = flood adj in
             let acc = Set.union found acc in
@@ -217,10 +199,8 @@ module Pipes = struct
       | [] -> acc
     in
 
-    get_inside'
-      (Set.empty (module IntPair))
-      (List.hd_exn loop) (List.tl_exn loop)
-    |> Set.to_list
+    let all = get_inside' loop_set (List.hd_exn loop) (List.tl_exn loop) in
+    Set.diff all loop_set |> Set.to_list
 
   let of_string s =
     let lines = lines_of_string s in
@@ -261,7 +241,7 @@ let part_b input =
 
   let enclosed = Pipes.get_inside p loop in
 
-  let () =
+  let debug () =
     Stdio.print_endline "Printing found chars:";
     let open Pipes in
     let str = to_string p in
@@ -279,6 +259,9 @@ let part_b input =
     Stdio.print_endline (chars |> String.of_array)
   in
 
+  ignore debug;
+
+  (* debug (); *)
   List.length enclosed |> Int.to_string
 
 let%test_module "day 10" =
