@@ -54,6 +54,10 @@ let lcm vals =
   let primes = List.fold vals ~init:(Map.empty (module Int)) ~f in
   Map.fold primes ~init:1 ~f:(fun ~key ~data acc -> (key ** data) * acc)
 
+let pairs n =
+  let open List in
+  range 0 (n - 1) |> concat_map ~f:(fun a -> range (a + 1) n |> map ~f:(fun b -> (a, b)))
+
 module IntPair = struct
   module T = struct
     type t = int * int [@@deriving equal, compare, sexp_of]
@@ -117,3 +121,6 @@ let%test_unit "lcm two" = [%test_result: int] (lcm [ 12; 18 ]) ~expect:36
 
 let%test_unit "lcm many" =
   [%test_result: int] (lcm [ 10; 16; 24; 85 ]) ~expect:4080
+
+let%test_unit "pairs" = 
+  [%test_result: (int * int) list] (pairs 4) ~expect:[0, 1; 0, 2; 0, 3; 1, 2; 1, 3; 2, 3]
