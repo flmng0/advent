@@ -37,14 +37,16 @@ module Pipes = struct
     if x < 0 || x >= p.width || y < 0 || y >= p.height then None
     else Some (idx p (x, y))
 
+  let get p coord =
+    idx_opt p coord |> Option.map ~f:(fun i -> Array.unsafe_get p.tiles i)
+
   let travel p from through =
     let x1, y1 = from in
     let x2, y2 = through in
 
     let dx, dy = (x2 - x1, y2 - y1) in
 
-    idx_opt p through
-    |> Option.map ~f:(Array.get p.tiles)
+    get p through
     |> Option.find_map ~f:(function
          | V -> Some (x2, y2 + dy)
          | H -> Some (x2 + dx, y2)
@@ -66,9 +68,6 @@ module Pipes = struct
              else None
          | Ground -> None
          | Start -> None)
-
-  let get p coord =
-    idx_opt p coord |> Option.map ~f:(fun i -> Array.unsafe_get p.tiles i)
 
   let cardinal = [ (0, -1); (1, 0); (0, 1); (-1, 0) ]
 
@@ -93,21 +92,13 @@ module Pipes = struct
            let sx, sy = start in
            walk [ start ] (sx + dx, sy + dy) start)
 
-  let diff a b =
-    let x1, y1 = a in
-    let x2, y2 = b in
-    (x2 - x1, y2 - y1)
-
   let get_inside p loop =
-    let loop_set = Set.of_list (module IntPair) loop in
-
     let top, bottom, left, right =
-      Set.fold loop_set ~init:(p.width, -1, p.height, -1)
+      List.fold loop ~init:(p.width, -1, p.height, -1)
         ~f:(fun (t, b, l, r) (x, y) -> (min t y, max b y, min l x, max r x))
     in
-    let iw, ih = (bottom - top, right - left) in
 
-    let inner_norm =
+    let clockwise =
       let a, b =
         match loop with
         | a :: b :: _ -> (a, b)
@@ -134,77 +125,59 @@ module Pipes = struct
               in
               (start, stop, f)
           | _ ->
-              let msg =
-                Printf.sprintf
-                  "2 consecutive points don't have an equal? Got points: %i \
-                   %i, %i %i"
-                  x1 y1 x2 y2
-              in
-              invalid_arg msg
+              Printf.invalid_argf
+                "2 consecutive points don't have an equal? Got points: %i %i, \
+                 %i %i"
+                x1 y1 x2 y2 ()
         in
 
         Sequence.range start stop |> Sequence.count ~f
       in
 
-      let open Int in
-      if rem intersections 2 = 1 then fun (x, y) ->
-        let x', y' = (y, -x) in
-        Sign.(to_int (sign x'), to_int (sign y'))
-      else fun (x, y) ->
-        let x', y' = (-y, x) in
-        Sign.(to_int (sign x'), to_int (sign y'))
+      Int.rem intersections 2 = 1
     in
 
-    let flood seed =
-      let q = Queue.create ~capacity:(iw * ih) () in
+    let up (x, y) =
+      match idx_opt p (x, y) with
+      | None ->
+          Stdio.printf "No idx for coord (%i %i)\n" x y;
+          None
+      | Some i -> (
+          match p.tiles.(i) with
+          | NE | NW -> Some true
+          | SE | SW -> Some false
+          | _ -> None)
+    in
 
-      let rec flood' found =
-        let inside coord =
-          not (Set.mem loop_set coord || Set.mem found coord)
-        in
-        match Queue.dequeue q with
-        | Some (x1, y1) ->
-            let ns =
-              List.filter_map cardinal ~f:(fun (x2, y2) ->
-                  let coord = (x1 + x2, y1 + y2) in
-                  if inside coord then Some coord else None)
+    let count_line acc (y, xs) =
+      let xs = List.sort xs ~compare:Int.compare in
+
+      let rec count_line' acc inside upwards = function
+        | x1 :: x2 :: xs ->
+            let dx = Int.abs (x2 - x1) in
+            let next_inside, upwards =
+              match up (x1, y) with
+              | Some u ->
+                  if Bool.(u = upwards) then (inside, u) else (not inside, u)
+              | None -> (not inside, not upwards)
             in
-            Queue.enqueue_all q ns;
 
-            let ns_set = Set.of_list (module IntPair) ns in
-            let found = Set.union found ns_set in
+            let acc = if inside then acc + dx - 1 else acc in
 
-            flood' found
-        | None -> found
+            count_line' acc next_inside upwards (x2 :: xs)
+        | _ -> acc
       in
 
-      Queue.enqueue q seed;
-      flood' (Set.singleton (module IntPair) seed)
+      let is_up = if clockwise then true else false in
+      count_line' acc true is_up xs
     in
 
-    let rec get_inside' acc prev loop =
-      match loop with
-      | curr :: loop ->
-          let diff = diff prev curr in
-          let dx, dy = inner_norm diff in
-
-          let x, y = curr in
-          let adj = (x + dx, y + dy) in
-
-          if Set.mem acc adj then get_inside' acc curr loop
-          else
-            let found = flood adj in
-            let acc = Set.union found acc in
-            get_inside' acc curr loop
-      | [] -> acc
-    in
-
-    let all = get_inside' loop_set (List.hd_exn loop) (List.tl_exn loop) in
-    Set.diff all loop_set |> Set.to_list
+    let lines = Map.of_alist_multi (module Int) loop in
+    Map.to_sequence lines |> Sequence.fold ~init:0 ~f:count_line
 
   let of_string s =
     let lines = lines_of_string s in
-    let width = String.length (List.hd_exn lines) in
+    let width = String.length (List.hd_exn lines |> String.strip) in
     let height = List.length lines in
 
     let tiles =
@@ -231,9 +204,9 @@ let day = 10
 
 let part_a input =
   let p = Pipes.of_string input in
-  let loop = Pipes.get_loop p in
+  let loop = Pipes.get_loop p |> Option.value_exn in
 
-  List.length (Option.value_exn loop) / 2 |> Int.to_string
+  List.length loop / 2 |> Int.to_string
 
 let part_b input =
   let p = Pipes.of_string input in
@@ -241,28 +214,7 @@ let part_b input =
 
   let enclosed = Pipes.get_inside p loop in
 
-  let debug () =
-    Stdio.print_endline "Printing found chars:";
-    let open Pipes in
-    let str = to_string p in
-    let chars = String.to_array str in
-    List.iter enclosed ~f:(fun (x, y) ->
-        let i = x + (y * (p.width + 1)) in
-        chars.(i) <- '#');
-    Stdio.print_endline (chars |> String.of_array);
-
-    Stdio.print_endline "Printing loop chars:";
-    let chars = String.to_array str in
-    List.iter loop ~f:(fun (x, y) ->
-        let i = x + (y * (p.width + 1)) in
-        chars.(i) <- '#');
-    Stdio.print_endline (chars |> String.of_array)
-  in
-
-  ignore debug;
-
-  (* debug (); *)
-  List.length enclosed |> Int.to_string
+  Int.to_string enclosed
 
 let%test_module "day 10" =
   (module struct
@@ -272,13 +224,6 @@ SJ.L7
 |F--J
 LJ...
 |}
-
-    let%test_unit "pipe parsing" =
-      [%test_result: string]
-        (Pipes.of_string input |> Pipes.to_string)
-        ~expect:input
-
-    let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:"8"
 
     let input_b1 =
       {|...........
@@ -291,6 +236,16 @@ LJ...
 .L--J.L--J.
 ...........
 |}
+
+    let%test_unit "pipe parsing" =
+      [%test_result: string]
+        (Pipes.of_string input |> Pipes.to_string)
+        ~expect:input
+
+    let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:"8"
+
+    let%test_unit "part a 1" =
+      [%test_result: string] (part_a input_b1) ~expect:"23"
 
     let%test_unit "part b 1" =
       [%test_result: string] (part_b input_b1) ~expect:"4"

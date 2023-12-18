@@ -56,11 +56,12 @@ let lcm vals =
 
 let pairs n =
   let open List in
-  range 0 (n - 1) |> concat_map ~f:(fun a -> range (a + 1) n |> map ~f:(fun b -> (a, b)))
+  range 0 (n - 1)
+  |> concat_map ~f:(fun a -> range (a + 1) n |> map ~f:(fun b -> (a, b)))
 
 module IntPair = struct
   module T = struct
-    type t = int * int [@@deriving equal, compare, sexp_of]
+    type t = int * int [@@deriving equal, compare, sexp_of, show]
   end
 
   include T
@@ -122,5 +123,6 @@ let%test_unit "lcm two" = [%test_result: int] (lcm [ 12; 18 ]) ~expect:36
 let%test_unit "lcm many" =
   [%test_result: int] (lcm [ 10; 16; 24; 85 ]) ~expect:4080
 
-let%test_unit "pairs" = 
-  [%test_result: (int * int) list] (pairs 4) ~expect:[0, 1; 0, 2; 0, 3; 1, 2; 1, 3; 2, 3]
+let%test_unit "pairs" =
+  [%test_result: (int * int) list] (pairs 4)
+    ~expect:[ (0, 1); (0, 2); (0, 3); (1, 2); (1, 3); (2, 3) ]
