@@ -1,18 +1,13 @@
 open Util
 open Base
 
-type dish = {
-  rocks : (int * int) list;
-  cubes : (int * int) list;
-  width : int;
-  height : int;
-}
+type dish = { data : tile array; width : int; height : int }
+and tile = Empty | Rock | Cube
 
 let show_dish d =
   let tile y x =
-    if List.mem d.rocks (x, y) ~equal:IntPair.equal then 'O'
-    else if List.mem d.cubes (x, y) ~equal:IntPair.equal then '#'
-    else '.'
+    let i = x + (y * d.width) in
+    match d.data.(i) with Empty -> '.' | Rock -> 'O' | Cube -> '#'
   in
   let line y =
     Sequence.range 0 d.width
@@ -24,60 +19,68 @@ let show_dish d =
   in
   lines |> String.concat_lines
 
+let tile_of_char = function
+  | '.' -> Empty
+  | 'O' -> Rock
+  | '#' -> Cube
+  | c -> Printf.invalid_argf "Unexpected character in input: %c" c ()
+
 let parse input =
   let lines = lines_of_string input in
 
   let width = List.hd_exn lines |> String.length in
   let height = List.length lines in
 
-  let rec parse' y rocks cubes = function
-    | line :: rest ->
-        let rocks, cubes =
-          line |> String.to_list
-          |> List.foldi ~init:(rocks, cubes) ~f:(fun x (r, c) -> function
-               | 'O' -> ((x, y) :: r, c) | '#' -> (r, (x, y) :: c) | _ -> (r, c))
-        in
-        parse' (y + 1) rocks cubes rest
-    | [] -> { rocks; cubes; width; height }
+  let parse_line line = line |> String.to_list |> List.map ~f:tile_of_char in
+
+  let data = lines |> List.concat_map ~f:parse_line |> Array.of_list in
+
+  { data; width; height }
+
+let rocks dish =
+  Array.to_list dish.data
+  |> List.filter_mapi ~f:(fun i t ->
+         let x = i % dish.width in
+         let y = i / dish.width in
+
+         match t with Rock -> Some (x, y) | _ -> None)
+
+let tilt dish =
+  let { data; width; height } = dish in
+  let data = Array.copy data in
+  let xrange = List.range 0 width in
+  let yrange = List.range 0 height in
+
+  let idx x y = x + (y * dish.width) in
+
+  let tilt' ~dir () =
+    let scan, select, idx =
+      match dir with
+      | `n -> (xrange, yrange, idx)
+      | `w -> (yrange, xrange, Fn.flip idx)
+      | `s -> (List.rev xrange, yrange, idx)
+      | `e -> (List.rev yrange, xrange, Fn.flip idx)
+    in
+
+    let scanline i =
+      List.fold select ~init:(List.hd_exn select) ~f:(fun min j ->
+          match data.(idx i j) with
+          | Empty -> min
+          | Rock ->
+              data.(idx i j) <- Empty;
+              data.(idx i min) <- Rock;
+              min + 1
+          | Cube -> j + 1)
+      |> ignore
+    in
+
+    List.iter scan ~f:scanline;
+
+    { dish with data }
   in
+  tilt'
 
-  parse' 0 [] [] lines
-
-let tilt_north d =
-  let cubes = Map.of_alist_multi (module Int) d.cubes in
-
-  let rec tilt_north' rocks = function
-    | rock :: rest ->
-        let rx, ry = rock in
-
-        let cs = Map.find cubes rx |> Option.value ~default:[] in
-        let rs = Map.find rocks rx |> Option.value ~default:[] in
-
-        let obstacles = List.append cs rs in
-
-        let new_y =
-          List.filter obstacles ~f:(fun y -> y < ry)
-          |> List.max_elt ~compare:Int.compare
-          |> Option.value_map ~default:0 ~f:(( + ) 1)
-        in
-
-        let rocks = Map.add_multi rocks ~key:rx ~data:new_y in
-
-        tilt_north' rocks rest
-    | [] -> rocks
-  in
-
-  let sorted =
-    List.sort d.rocks ~compare:(fun (x1, y1) (x2, y2) ->
-        IntPair.compare (y1, x1) (y2, x2))
-  in
-  let rocks =
-    tilt_north' (Map.empty (module Int)) sorted
-    |> Map.to_alist
-    |> List.concat_map ~f:(fun (x, ys) -> List.map ys ~f:(fun y -> (x, y)))
-  in
-  { d with rocks }
-
+let tilt_north d = tilt ~dir:`n d ()
 let day = 14
 
 let part_a input =
@@ -90,7 +93,7 @@ let part_a input =
   Stdio.print_endline (show_dish tilted);
 
   let load =
-    tilted.rocks
+    rocks tilted
     |> List.fold ~init:0 ~f:(fun acc (_x, y) -> acc + dish.height - y)
   in
 
