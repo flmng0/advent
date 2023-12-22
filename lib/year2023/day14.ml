@@ -63,8 +63,8 @@ let tilt dish ~dir =
     match dir with
     | `n -> (xrange, yrange, idx)
     | `w -> (yrange, xrange, Fn.flip idx)
-    | `s -> (List.rev xrange, yrange, idx)
-    | `e -> (List.rev yrange, xrange, Fn.flip idx)
+    | `s -> (xrange, List.rev yrange, idx)
+    | `e -> (yrange, List.rev xrange, Fn.flip idx)
   in
 
   let scanline i =
@@ -75,7 +75,7 @@ let tilt dish ~dir =
             data.(idx i j) <- Empty;
             data.(idx i min) <- Rock;
             match dir with `n | `w -> min + 1 | `s | `e -> min - 1)
-        | Cube -> ( match dir with `n | `w -> j + 1 | `s | `e -> j))
+        | Cube -> ( match dir with `n | `w -> j + 1 | `s | `e -> j - 1))
     |> ignore
   in
 
@@ -87,60 +87,52 @@ let day = 14
 let part_a input =
   let dish = parse input in
 
-  Stdio.print_endline "Original:";
-  Stdio.print_endline (show_dish dish);
-
   tilt_north dish;
 
-  Stdio.print_endline "\nTilted:";
-  Stdio.print_endline (show_dish dish);
-
-  let load =
+  let total_load =
     rocks dish
     |> List.fold ~init:0 ~f:(fun acc (_x, y) -> acc + dish.height - y)
   in
 
-  Int.to_string load
+  Int.to_string total_load
+
+let cycle dish = List.iter [ `n; `w; `s; `e ] ~f:(fun dir -> tilt ~dir dish)
 
 let part_b input =
   let dish = parse input in
 
-  let dirslist = [ `n; `w; `s; `e ] in
-  let dirs = Sequence.take (Sequence.cycle_list_exn dirslist) 1_000_000_000 in
+  let total_cycles = 1_000_000_000 in
 
-  Stdio.print_endline "Original:";
-  Stdio.print_endline (show_dish dish);
+  let rec loop last = function
+    | i when i = total_cycles -> 0
+    | i -> (
+        cycle dish;
 
-  let rec loop last i dirs =
-    match Sequence.next dirs with
-    | Some (dir, dirs) ->
-        let is_north = match dir with `n -> true | _ -> false in
-
-        tilt ~dir dish;
-
-        if i < 5 then (
-          Stdio.print_endline "Tilting!";
-          Stdio.print_endline (show_dish dish));
-
-        if is_north then
-          let copy = Array.copy dish.data in
-          match last with
-          | Some last ->
-              if Array.equal tile_equal last dish.data then ()
-              else loop (Some copy) (i + 1) dirs
-          | None -> loop (Some copy) (i + 1) dirs
-        else loop last (i + 1) dirs
-    | None -> ()
+        match
+          List.Assoc.find ~equal:(Array.equal tile_equal) last dish.data
+        with
+        | Some loop_start ->
+            let loop_length = i - loop_start in
+            let remaining = total_cycles - loop_start - 1 in
+            let cycles_left = remaining % loop_length in
+            cycles_left
+        | None ->
+            let copy = Array.copy dish.data in
+            loop ((copy, i) :: last) (i + 1))
   in
 
-  loop None 0 dirs;
+  let cycles_left = loop [] 0 in
 
-  let load =
+  for _ = 1 to cycles_left do
+    cycle dish
+  done;
+
+  let total_load =
     rocks dish
     |> List.fold ~init:0 ~f:(fun acc (_x, y) -> acc + dish.height - y)
   in
 
-  Int.to_string load
+  Int.to_string total_load
 
 let%test_module "day 14" =
   (module struct
@@ -156,6 +148,12 @@ O.#..O.#.#
 #....###..
 #OO..#....
 |}
+
+    let%test_unit "equal" =
+      [%test_result: bool]
+        (let { data; _ } = parse input in
+         Array.equal tile_equal data data)
+        ~expect:true
 
     let%test_unit "part a" = [%test_result: string] (part_a input) ~expect:"136"
     let%test_unit "part b" = [%test_result: string] (part_b input) ~expect:"64"
