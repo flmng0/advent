@@ -1,6 +1,8 @@
 defmodule Advent.Year2024.Day2 do
   @behaviour Advent.Solver
 
+  defdelegate sign(x), to: Advent
+
   defp parse(input) do
     parse_line = fn line ->
       String.split(line, " ", trim: true) |> Enum.map(&String.to_integer/1)
@@ -8,9 +10,6 @@ defmodule Advent.Year2024.Day2 do
 
     Advent.map_input(input, parse_line)
   end
-
-  defp sign(0), do: 0
-  defp sign(x), do: x / abs(x)
 
   defp sign_of([x, y | _]), do: sign(y - x)
 

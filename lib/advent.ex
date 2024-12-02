@@ -16,4 +16,7 @@ defmodule Advent do
       Map.update(acc, n, 1, &(&1 + 1))
     end)
   end
+
+  def sign(0), do: 0
+  def sign(x), do: x / abs(x)
 end
