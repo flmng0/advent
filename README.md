@@ -20,5 +20,6 @@ TL;DR: Check `lib/mix/tasks/solve.ex` and `test`
 - Loads the "`Solver`" module dynamically, which implements the `Advent.Solver` behaviour.
 - Solvers for a given year are located in `lib/advent/year<YEAR>/day<DAY>.ex`.
 - Utilities will be implemented in `lib/advent.ex`.
+- Tests are written for provided example inputs in `test/year<YEAR>/day<DAY>_test.ex`.
 
 
