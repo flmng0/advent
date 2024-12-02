@@ -14,12 +14,25 @@ always a good way to learn a new language.
 
 ## How It Works
 
-TL;DR: Check `lib/mix/tasks/solve.ex` and `test`
+> TL;DR: Check [`lib/mix/tasks/solve.ex`](lib/mix/tasks/solve.ex).
 
 - Automatically downloads input files and caches them using a session token cookie (using [`Req`](https://github.com/wojtekmach/req)).
 - Loads the "`Solver`" module dynamically, which implements the `Advent.Solver` behaviour.
 - Solvers for a given year are located in `lib/advent/year<YEAR>/day<DAY>.ex`.
 - Utilities will be implemented in `lib/advent.ex`.
-- Tests are written for provided example inputs in `test/year<YEAR>/day<DAY>_test.ex`.
+
+## Testing
+
+> TL;DR: Check [`test/support/day_template.ex`](test/support/day_template.ex).
+
+Tests are written for provided example inputs in `test/year<YEAR>/day<DAY>_test.exs`.
+
+Each test takes advantage of the `ExUnit.CaseTemplate` located at `test/support/day_template.ex`.
+
+The case template automatically defines the tests given some additional parameters.
+
+For more information look at [`day_template.ex`](test/support/day_template.ex) file.
+
+
 
 
