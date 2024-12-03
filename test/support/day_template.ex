@@ -41,7 +41,8 @@ defmodule DayTemplate do
 
         if unquote(options)[:part_b] do
           test "part b", context do
-            assert context.solver.solve_b(context.input) == context.part_b
+            input = unquote(options)[:input_b] || context.input
+            assert context.solver.solve_b(input) == context.part_b
           end
         end
       end
