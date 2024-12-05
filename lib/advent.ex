@@ -36,6 +36,30 @@ defmodule Advent do
     def size(%__MODULE__{width: width, height: height}), do: width * height
   end
 
+  # Get chunks of input splitting on new lines
+  def chunks(input) do
+    chunk_fn = fn
+      "", acc ->
+        {:cont, Enum.reverse(acc), []}
+
+      elem, acc ->
+        {:cont, [elem | acc]}
+    end
+
+    after_fn = fn
+      [] -> {:cont, []}
+      acc -> {:cont, Enum.reverse(acc), []}
+    end
+
+    input
+    |> lines()
+    |> Enum.chunk_while(
+      [],
+      chunk_fn,
+      after_fn
+    )
+  end
+
   def lines(input) do
     input |> String.trim_trailing() |> String.splitter("\n") |> Stream.map(&String.trim/1)
   end
