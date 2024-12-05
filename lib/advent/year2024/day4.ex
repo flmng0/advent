@@ -42,10 +42,14 @@ defmodule Advent.Year2024.Day4 do
               (x + dx) in xrange and (y + dy) in yrange,
               do: chars[{x + dx, y + dy}]
 
-        freqs = Enum.frequencies(diagonals)
+        check_diagonals = fn ->
+          diagonals
+          |> Enum.frequencies()
+          |> Enum.all?(fn {char, count} -> count == 2 and char in tails end)
+        end
 
-        Enum.all?(tails, fn t -> freqs[t] == 2 end) and
-          List.first(diagonals) != List.last(diagonals)
+        List.first(diagonals) != List.last(diagonals) and
+          check_diagonals.()
       else
         false
       end
