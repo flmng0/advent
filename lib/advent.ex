@@ -48,4 +48,10 @@ defmodule Advent do
 
   def sign(0), do: 0
   def sign(x), do: x / abs(x)
+
+  def except_index(list, index) do
+    {l, [_ | r]} = Enum.split(list, index)
+
+    l ++ r
+  end
 end

@@ -1,7 +1,7 @@
 defmodule Advent.Year2024.Day2 do
   @behaviour Advent.Solver
 
-  defdelegate sign(x), to: Advent
+  import Advent, only: [sign: 1, except_index: 2]
 
   defp parse(input) do
     parse_line = fn line ->
@@ -16,14 +16,12 @@ defmodule Advent.Year2024.Day2 do
   defp is_safe?(reports) do
     desired_sign = sign_of(reports)
 
-    [_ | tail] = reports
-
-    Enum.zip(reports, tail)
-    |> Enum.all?(fn {x, y} ->
+    reports
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.all?(fn [x, y] ->
       diff = y - x
 
-      sign(diff) == desired_sign and
-        abs(diff) in 1..3
+      abs(diff) in 1..3 and sign(diff) == desired_sign
     end)
   end
 
@@ -35,20 +33,12 @@ defmodule Advent.Year2024.Day2 do
 
   @impl Advent.Solver
   def solve_b(input) do
-    # I'm so frustrated that this ended up needing to be brute forced.
-    #
-    # I want to come back to this at some point
     parse(input)
     |> Enum.count(fn reports ->
-      if is_safe?(reports) do
-        true
-      else
-        Enum.with_index(reports, fn _, i -> i end)
-        |> Enum.any?(fn i ->
-          {l, [_ | r]} = Enum.split(reports, i)
-
-          is_safe?(l ++ r)
-        end)
+      with false <- is_safe?(reports) do
+        0..(length(reports) - 1)
+        |> Enum.map(&except_index(reports, &1))
+        |> Enum.any?(&is_safe?/1)
       end
     end)
   end
