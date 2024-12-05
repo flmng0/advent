@@ -22,6 +22,9 @@ defmodule DayTemplate do
 
   using options do
     quote do
+      day = unquote(options)[:day]
+      tag_prefix = :"day#{day}"
+
       setup context do
         module_name =
           __MODULE__
@@ -35,10 +38,14 @@ defmodule DayTemplate do
       end
 
       describe "sample tests of day #{unquote(options)[:day]}" do
+        @describetag [{tag_prefix, true}]
+
+        @tag [{:"#{tag_prefix}a", true}]
         test "part a", context do
           assert context.solver.solve_a(context.input) == context.part_a
         end
 
+        @tag [{:"#{tag_prefix}b", true}]
         if unquote(options)[:part_b] do
           test "part b", context do
             input = unquote(options)[:input_b] || context.input
