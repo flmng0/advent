@@ -3,11 +3,13 @@ defmodule Advent do
   Utilities that are used throughout the challenge.
   """
 
+  def lines(input) do
+    input |> String.trim_trailing() |> String.splitter("\n") |> Stream.map(&String.trim/1)
+  end
+
   def map_input(input, mapper) do
     input
-    |> String.trim_trailing()
-    |> String.splitter("\n")
-    |> Stream.map(&String.trim/1)
+    |> lines()
     |> Enum.map(mapper)
   end
 

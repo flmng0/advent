@@ -1,0 +1,15 @@
+defmodule Advent.Year2024.Day4Test do
+  @input "MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+"
+
+  use DayTemplate, day: 4, part_a: 18, part_b: 9, input: @input
+end
