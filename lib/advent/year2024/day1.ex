@@ -23,7 +23,7 @@ defmodule Advent.Year2024.Day1 do
   def solve_b(input) do
     {l, r} = parse(input)
 
-    hc = Advent.hitcount(r)
+    hc = Enum.frequencies(r)
 
     Enum.map(l, fn n ->
       n * Map.get(hc, n, 0)

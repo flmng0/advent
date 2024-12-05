@@ -32,6 +32,8 @@ defmodule Advent do
 
       %__MODULE__{width: width, height: height, chars: chars}
     end
+
+    def size(%__MODULE__{width: width, height: height}), do: width * height
   end
 
   def lines(input) do
@@ -42,12 +44,6 @@ defmodule Advent do
     input
     |> lines()
     |> Enum.map(mapper)
-  end
-
-  def hitcount(nums) do
-    Enum.reduce(nums, %{}, fn n, acc ->
-      Map.update(acc, n, 1, &(&1 + 1))
-    end)
   end
 
   def sign(0), do: 0
