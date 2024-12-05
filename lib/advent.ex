@@ -78,4 +78,9 @@ defmodule Advent do
 
     l ++ r
   end
+
+  def parse_int!(n) do
+    {n, ""} = Integer.parse(n)
+    n
+  end
 end

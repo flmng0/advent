@@ -1,11 +1,6 @@
 defmodule Advent.Year2024.Day5 do
   @behaviour Advent.Solver
 
-  defp int_of_string!(n) do
-    {n, ""} = Integer.parse(n)
-    n
-  end
-
   def parse(input) do
     [ordering, updates] = Advent.chunks(input)
 
@@ -15,7 +10,7 @@ defmodule Advent.Year2024.Day5 do
           [l, r] =
             line
             |> String.split("|")
-            |> Enum.map(&int_of_string!/1)
+            |> Enum.map(&Advent.parse_int!/1)
 
           Map.update(out, l, [r], &[r | &1])
       end
@@ -24,11 +19,21 @@ defmodule Advent.Year2024.Day5 do
       for line <- updates do
         line
         |> String.split(",")
-        |> Enum.map(&int_of_string!/1)
+        |> Enum.map(&Advent.parse_int!/1)
       end
 
     %{ordering: ordering, updates: updates}
   end
+
+  defp ordered?(x, y, ordering) do
+    if afters = ordering[x] do
+      y not in afters
+    else
+      true
+    end
+  end
+
+  defp unordered?(x, y, ordering), do: not ordered?(x, y, ordering)
 
   @spec test_update(list(integer()), map()) :: boolean()
   def test_update(update, ordering) do
@@ -37,14 +42,7 @@ defmodule Advent.Year2024.Day5 do
     |> Enum.all?(fn {x, i} ->
       update
       |> Enum.take(i)
-      |> Enum.any?(fn y ->
-        if afters = ordering[x] do
-          y in afters
-        else
-          false
-        end
-      end)
-      |> then(&(not &1))
+      |> Enum.all?(&ordered?(x, &1, ordering))
     end)
   end
 
@@ -54,14 +52,7 @@ defmodule Advent.Year2024.Day5 do
       update ->
         {l, [_ | r]} = Enum.split(update, i)
 
-        problem_idx =
-          Enum.find_index(l, fn y ->
-            if afters = ordering[x] do
-              y in afters
-            else
-              false
-            end
-          end)
+        problem_idx = Enum.find_index(l, &unordered?(x, &1, ordering))
 
         if problem_idx do
           {l, r} = Enum.split(l ++ r, problem_idx)
