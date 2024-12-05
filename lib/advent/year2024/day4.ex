@@ -1,37 +1,9 @@
 defmodule Advent.Year2024.Day4 do
   @behaviour Advent.Solver
 
-  defmodule WordSearch do
-    defstruct width: 0, height: 0, chars: []
+  alias Advent.CharGrid
 
-    @type t() :: %__MODULE__{
-            width: integer(),
-            height: integer(),
-            chars: map()
-          }
-  end
-
-  @spec parse(String.t()) :: WordSearch.t()
-  defp parse(input) do
-    chars = input |> String.trim_trailing() |> String.to_charlist()
-
-    width = Enum.find_index(chars, &(&1 == ?\n))
-    height = Enum.count(chars, &(&1 == ?\n)) + 1
-
-    filtered = chars |> Enum.filter(&(&1 != ?\n)) |> Enum.with_index()
-
-    chars =
-      for {c, i} <- filtered, into: %{} do
-        x = Integer.mod(i, width)
-        y = Integer.floor_div(i, width)
-
-        {{x, y}, c}
-      end
-
-    %WordSearch{width: width, height: height, chars: chars}
-  end
-
-  defp find_ocurrences(%WordSearch{width: width, height: height, chars: chars}, word) do
+  defp find_ocurrences(%CharGrid{width: width, height: height, chars: chars}, word) do
     word = String.to_charlist(word)
 
     test = fn x, y ->
@@ -54,7 +26,7 @@ defmodule Advent.Year2024.Day4 do
     end
   end
 
-  defp find_cross_mas(%WordSearch{width: width, height: height, chars: chars}) do
+  defp find_cross_mas(%CharGrid{width: width, height: height, chars: chars}) do
     center = ?A
     tails = [?M, ?S]
 
@@ -87,12 +59,12 @@ defmodule Advent.Year2024.Day4 do
 
   @impl Advent.Solver
   def solve_a(input) do
-    parse(input)
+    CharGrid.parse(input)
     |> find_ocurrences("XMAS")
   end
 
   @impl Advent.Solver
   def solve_b(input) do
-    parse(input) |> find_cross_mas()
+    CharGrid.parse(input) |> find_cross_mas()
   end
 end
