@@ -24,6 +24,32 @@ defmodule Advent.Year2024.Day6 do
     %{gpos: gpos, walls: walls, width: grid.width, height: grid.height}
   end
 
+  def print_visited(grid, visited) do
+    for y <- 0..(grid.height - 1), x <- 0..(grid.width - 1) do
+      pos = {x, y}
+
+      char =
+        cond do
+          pos == grid.gpos ->
+            "^"
+
+          pos in grid.walls ->
+            "#"
+
+          MapSet.member?(visited, pos) ->
+            "X"
+
+          true ->
+            "."
+        end
+
+      IO.write(char)
+      if x == grid.width - 1, do: IO.write("\n")
+    end
+
+    :ok
+  end
+
   def move_guard({gx, gy}, walls, facing) do
     hittest = fn
       :up, {x, y} -> {gx == x and gy > y, {x, y + 1}}
@@ -60,19 +86,23 @@ defmodule Advent.Year2024.Day6 do
   def turn(:down), do: :left
   def turn(:left), do: :up
 
-  def process(grid) do
-    process(grid, :up, [])
-  end
-
   def process(
         %{gpos: {gx, gy} = gpos, walls: walls, width: width, height: height} = grid,
-        facing,
-        visited
+        facing \\ :up,
+        visited \\ [],
+        hits \\ MapSet.new()
       ) do
     with {_x, _y} = new_pos <- move_guard(gpos, walls, facing) do
-      new_visited = line_positions(gpos, new_pos)
+      hit = {facing, new_pos}
 
-      process(%{grid | gpos: new_pos}, turn(facing), new_visited ++ visited)
+      if MapSet.member?(hits, hit) do
+        :looped
+      else
+        new_visited = line_positions(gpos, new_pos)
+        hits = MapSet.put(hits, hit)
+
+        process(%{grid | gpos: new_pos}, turn(facing), new_visited ++ visited, hits)
+      end
     else
       nil ->
         to =
@@ -91,5 +121,15 @@ defmodule Advent.Year2024.Day6 do
   @impl Advent.Solver
   def solve_a(input) do
     parse(input) |> process() |> MapSet.size()
+  end
+
+  @impl Advent.Solver
+  def solve_b(input) do
+    grid = parse(input)
+    path = process(grid)
+
+    Enum.count(path, fn pos ->
+      :looped == process(%{grid | walls: [pos | grid.walls]})
+    end)
   end
 end
