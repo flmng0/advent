@@ -30,6 +30,7 @@ defmodule Mix.Tasks.Solve do
              Req.new(base_url: download_base())
              |> Req.Request.put_header("Cookie", "session=#{session}")
              |> Req.get(url: download_path(year, day)) do
+        Mix.shell().info("Successfully downloaded input file. Writing to: #{input_path}")
         File.write!(input_path, response.body)
         {:ok, response.body}
       else
@@ -81,6 +82,10 @@ defmodule Mix.Tasks.Solve do
 
     with {:ok, input} <- input,
          {:ok, solver} <- solver_module(year, day, part_b?) do
+      Mix.shell().info(
+        "Running solver for year #{year} day #{day}, part #{if part_b?, do: "B", else: "A"}."
+      )
+
       function = if part_b?, do: :solve_b, else: :solve_a
       solution = apply(solver, function, [input])
 
