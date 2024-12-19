@@ -36,6 +36,25 @@ defmodule Advent do
     def size(%__MODULE__{width: width, height: height}), do: width * height
   end
 
+  # The below additions can be credited to:
+  # https://stackoverflow.com/a/64108851
+  @spec distribute(list(), list()) :: list(list())
+  def distribute(xs, ys), do: Enum.map(xs, &[&1 | ys])
+
+  @spec distribute_on_all(list(), list(list())) :: list(list())
+  def distribute_on_all(x, l), do: Enum.map(l, &distribute(x, &1)) |> Enum.concat()
+
+  def repeat(n, f, x) do
+    for _ <- 1..n, reduce: x do
+      x ->
+        f.(x)
+    end
+  end
+
+  def combinations(items, n) do
+    repeat(n, &distribute_on_all(items, &1), [[]])
+  end
+
   # Get chunks of input splitting on new lines
   def chunks(input) do
     chunk_fn = fn
